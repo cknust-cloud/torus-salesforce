@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Torus × Salesforce</title>
+<style>
+:root{
+  color-scheme: light;
+  --sf-blue:#0176D3;
+  --sf-blue-dark:#014486;
+  --torus-amber:#FF7A45;
+  --torus-amber-dark:#C24A1E;
+  --ink:#12161C;
+  --ink-soft:#3B4453;
+  --paper:#FFFFFF;
+  --paper-soft:#F4F6F9;
+  --line:#E3E7EE;
+  --dark-bg:#0B0E14;
+  --dark-bg-2:#131826;
+  --dark-line:#232B3B;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--ink);
+  background:var(--paper);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{
+  font-family:inherit;
+  line-height:1.05;
+  letter-spacing:-0.02em;
+  margin:0;
+}
+p{margin:0;}
+img{max-width:100%;display:block;}
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px;}
+.eyebrow{
+  text-transform:uppercase;
+  letter-spacing:0.14em;
+  font-size:12px;
+  font-weight:700;
+  color:var(--sf-blue);
+}
+.eyebrow.on-dark{color:#7FC4FF;}
+section{padding:100px 0;position:relative;}
+@media (max-width:720px){section{padding:64px 0;}}
+
+/* ---------- reveal ---------- */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .5s ease-out, transform .5s ease-out;}
+.reveal.in{opacity:1;transform:translateY(0);}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+
+/* ---------- nav ---------- */
+.nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;max-width:1160px;margin:0 auto;}
+.lockup{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px;}
+.lockup .t{color:var(--ink);}
+.lockup .x{color:#B7BFCC;font-weight:400;}
+.lockup .s{color:var(--sf-blue);}
+.nav-links{display:flex;gap:28px;font-size:14px;font-weight:600;color:var(--ink-soft);}
+.nav-links a{color:inherit;text-decoration:none;}
+.nav-links a:hover{color:var(--sf-blue);}
+.nav-cta{
+  background:var(--sf-blue);color:#fff;border:none;padding:10px 18px;border-radius:8px;
+  font-weight:700;font-size:14px;cursor:pointer;
+}
+.nav-toggle{display:none;background:none;border:none;font-size:22px;cursor:pointer;}
+.drawer{display:none;flex-direction:column;gap:14px;padding:18px 28px 22px;border-top:1px solid var(--line);}
+.drawer a{color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:15px;}
+@media (max-width:800px){
+  .nav-links{display:none;}
+  .nav-toggle{display:block;}
+  .nav.open .drawer{display:flex;}
+}
+
+/* ---------- hero ---------- */
+.hero{
+  background:radial-gradient(ellipse at top right, #1B2438 0%, var(--dark-bg) 55%);
+  color:#F2F5FA;padding:120px 0 90px;
+}
+.conf-line{
+  font-size:12px;color:#9FB0C9;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:28px;
+}
+.hero h1{
+  font-size:clamp(34px,5vw,58px);
+  max-width:820px;
+  font-weight:800;
+}
+.hero .accent{color:var(--torus-amber);}
+.hero .sub{
+  margin-top:22px;max-width:680px;font-size:19px;color:#C6D0E0;line-height:1.55;
+}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px;}
+.chip{
+  border:1px solid var(--dark-line);background:rgba(255,255,255,0.04);color:#DCE4F0;
+  padding:7px 14px;border-radius:100px;font-size:13px;font-weight:600;
+}
+.stat-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:52px;
+}
+@media (max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+.stat-card{
+  background:rgba(255,255,255,0.05);border:1px solid var(--dark-line);border-radius:14px;padding:20px;
+}
+.stat-card .num{font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.01em;}
+.stat-card .lbl{font-size:13px;color:#9FB0C9;margin-top:6px;line-height:1.4;}
+
+/* ---------- section headers ---------- */
+.sec-head{max-width:680px;margin-bottom:48px;}
+.sec-head h2{font-size:clamp(26px,3.4vw,38px);margin-top:10px;font-weight:800;}
+.sec-head p{color:var(--ink-soft);margin-top:14px;font-size:16px;}
+.dark-sec{background:var(--dark-bg);color:#EAF0FA;}
+.dark-sec .sec-head p{color:#AAB6C9;}
+
+/* ---------- pain cards ---------- */
+.pain-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+@media (max-width:800px){.pain-grid{grid-template-columns:1fr;}}
+.flip-card{perspective:1400px;height:300px;}
+.flip-inner{
+  position:relative;width:100%;height:100%;transition:transform .6s cubic-bezier(.2,.8,.2,1);transform-style:preserve-3d;cursor:pointer;
+}
+.flip-card.flipped .flip-inner{transform:rotateY(180deg);}
+.face{
+  position:absolute;inset:0;border-radius:16px;padding:26px;backface-visibility:hidden;
+  border:1px solid var(--line);display:flex;flex-direction:column;
+}
+.face.front{background:var(--paper-soft);}
+.face.back{background:#0E2E4A;color:#EAF3FF;transform:rotateY(180deg);border-color:#0E2E4A;}
+.face h4{font-size:17px;font-weight:800;margin-bottom:10px;}
+.face .desc{font-size:14px;color:var(--ink-soft);line-height:1.5;}
+.face.back .desc{color:#C9DCF0;}
+.metric-row{display:flex;gap:10px;margin-top:auto;flex-wrap:wrap;}
+.metric{
+  background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--ink);
+}
+.steps{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.steps li{font-size:13.5px;padding-left:20px;position:relative;color:#EAF3FF;}
+.steps li:before{content:"→";position:absolute;left:0;color:var(--torus-amber);font-weight:800;}
+.impact{margin-top:auto;font-size:13px;font-weight:700;color:var(--torus-amber);padding-top:10px;}
+.flip-hint{font-size:11px;color:#8A93A3;margin-top:8px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+.face.back .flip-hint{color:#8FB4D9;}
+
+/* ---------- platform cards ---------- */
+.platform-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+@media (max-width:1000px){.platform-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:520px){.platform-grid{grid-template-columns:1fr;}}
+.p-card{
+  background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;
+}
+.p-card .dot{width:34px;height:34px;border-radius:9px;background:var(--sf-blue);margin-bottom:14px;}
+.p-card.keep .dot{background:var(--torus-amber);}
+.p-card h4{font-size:15px;font-weight:800;}
+.p-card .replaces{font-size:11px;font-weight:700;color:#9AA3B2;text-transform:uppercase;margin-top:4px;letter-spacing:.05em;}
+.p-card p{font-size:13.5px;color:var(--ink-soft);margin-top:10px;}
+
+/* ---------- journey map ---------- */
+.journey{display:flex;overflow-x:auto;gap:0;padding-bottom:12px;}
+.j-stage{flex:0 0 220px;padding:0 16px;position:relative;}
+.j-stage:not(:last-child):after{
+  content:"";position:absolute;top:20px;right:-6px;width:24px;height:2px;background:var(--line);
+}
+.j-num{width:36px;height:36px;border-radius:50%;background:var(--sf-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;}
+.j-stage h5{font-size:14.5px;font-weight:800;margin-top:14px;}
+.j-stage .j-replace{font-size:12px;color:var(--sf-blue);font-weight:700;margin-top:6px;}
+.j-stage p{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+
+/* ---------- pillars ---------- */
+.pillar{margin-top:64px;}
+.pillar-head{display:flex;align-items:baseline;gap:14px;margin-bottom:22px;flex-wrap:wrap;}
+.pillar-head h3{font-size:22px;font-weight:800;}
+.pillar-tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:#EAF3FF;color:var(--sf-blue);padding:5px 10px;border-radius:100px;}
+
+.tabbar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.tabbtn{
+  border:1px solid var(--line);background:#fff;padding:9px 16px;border-radius:100px;font-size:13.5px;font-weight:700;cursor:pointer;color:var(--ink-soft);
+}
+.tabbtn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.pipe-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.pipe-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#8A93A3;padding:10px 12px;border-bottom:1px solid var(--line);}
+.pipe-table td{padding:12px;border-bottom:1px solid var(--line);}
+.stage-pill{padding:4px 10px;border-radius:100px;font-size:11.5px;font-weight:700;display:inline-block;}
+.stage-1{background:#FFF1E8;color:var(--torus-amber-dark);}
+.stage-2{background:#EAF3FF;color:var(--sf-blue-dark);}
+.stage-3{background:#E9F7EE;color:#1B7A3D;}
+.assump-note{font-size:12px;color:#8A93A3;margin-top:10px;font-style:italic;}
+
+.flow-wrap{border:1px solid var(--line);border-radius:16px;padding:28px;background:var(--paper-soft);}
+.flow-track{display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:8px;}
+.flow-node{
+  flex:0 0 auto;min-width:150px;border-radius:12px;padding:14px 16px;font-size:13px;font-weight:700;text-align:center;
+  border:2px solid var(--line);background:#fff;color:#B7BFCC;transition:all .25s ease;
+}
+.flow-node.active{border-color:var(--sf-blue);color:var(--sf-blue-dark);background:#EAF3FF;}
+.flow-arrow{color:#B7BFCC;font-size:18px;flex:0 0 auto;}
+.flow-desc{margin-top:20px;font-size:14px;color:var(--ink-soft);min-height:44px;}
+.flow-controls{display:flex;gap:10px;margin-top:16px;}
+.flow-btn{border:1px solid var(--line);background:#fff;padding:9px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;}
+.flow-btn:hover{border-color:var(--sf-blue);}
+
+.split-wrap{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+@media (max-width:760px){.split-wrap{grid-template-columns:1fr;}}
+.split-side{padding:26px;}
+.split-side.before{background:#FFF7F3;}
+.split-side.after{background:#EFF7FF;}
+.split-side h5{font-size:13px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;color:#8A93A3;margin-bottom:14px;}
+.perm-row{display:flex;justify-content:space-between;font-size:13.5px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.06);}
+.perm-tag{font-weight:800;font-size:12px;}
+.perm-tag.bad{color:#C24A1E;}
+.perm-tag.good{color:#1B7A3D;}
+
+/* ---------- agentforce ---------- */
+.agent-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+@media (max-width:800px){.agent-grid{grid-template-columns:1fr;}}
+.agent-card{background:rgba(255,255,255,0.04);border:1px solid var(--dark-line);border-radius:16px;padding:24px;}
+.agent-card h4{font-size:16px;font-weight:800;color:#fff;}
+.agent-meta{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.agent-meta div{font-size:13px;color:#AAB6C9;}
+.agent-meta b{color:#EAF0FA;font-weight:700;}
+
+/* ---------- ROI ---------- */
+.roi-shell{background:var(--paper-soft);border:1px solid var(--line);border-radius:20px;padding:36px;}
+@media (max-width:600px){.roi-shell{padding:22px;}}
+.roi-total{
+  display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;
+  border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:28px;
+}
+.roi-total .lbl{font-size:14px;color:var(--ink-soft);font-weight:700;}
+.roi-total .val{font-size:38px;font-weight:800;color:var(--sf-blue-dark);}
+.roi-cat{margin-bottom:30px;}
+.roi-cat:last-child{margin-bottom:0;}
+.roi-cat-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+.roi-cat-head h4{font-size:15.5px;font-weight:800;}
+.roi-cat-head .catval{font-size:18px;font-weight:800;color:var(--sf-blue-dark);}
+.slider-row{margin-bottom:14px;}
+.slider-row label{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);margin-bottom:6px;font-weight:600;}
+.slider-row input[type=range]{width:100%;accent-color:var(--sf-blue);}
+.enabled-by{font-size:12px;color:#8A93A3;margin-top:8px;}
+.enabled-by b{color:var(--ink-soft);}
+.formula-note{font-size:11.5px;color:#B0B8C4;margin-top:4px;font-style:italic;}
+
+/* ---------- proof ---------- */
+.proof-card{
+  display:grid;grid-template-columns:1fr 1.4fr;gap:0;border:1px solid var(--line);border-radius:18px;overflow:hidden;
+}
+@media (max-width:760px){.proof-card{grid-template-columns:1fr;}}
+.proof-side{background:var(--sf-blue);color:#fff;padding:32px;display:flex;flex-direction:column;justify-content:center;}
+.proof-side .big{font-size:40px;font-weight:800;}
+.proof-side .small{font-size:13px;margin-top:6px;color:#D6E9FF;}
+.proof-main{padding:32px;}
+.proof-main h4{font-size:16px;font-weight:800;}
+.proof-main p{margin-top:10px;font-size:14.5px;color:var(--ink-soft);}
+.proof-main a{color:var(--sf-blue);font-weight:700;text-decoration:none;font-size:13.5px;display:inline-block;margin-top:12px;}
+
+/* ---------- roadmap ---------- */
+.roadmap{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+@media (max-width:800px){.roadmap{grid-template-columns:1fr;}}
+.phase-card{border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff;}
+.phase-card .ph{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--sf-blue);}
+.phase-card h4{font-size:16px;font-weight:800;margin-top:8px;}
+.phase-card p{font-size:13.5px;color:var(--ink-soft);margin-top:10px;}
+.milestone{margin-top:14px;font-size:12.5px;font-weight:700;color:var(--torus-amber-dark);background:#FFF1E8;padding:8px 10px;border-radius:8px;}
+
+/* ---------- close ---------- */
+.close-sec{background:linear-gradient(135deg,#0B0E14 0%, #14203A 100%);color:#fff;padding:110px 0;text-align:center;}
+.close-sec h2{font-size:clamp(28px,4vw,42px);font-weight:800;max-width:720px;margin:0 auto;}
+.close-sec p{color:#AAB6C9;margin-top:16px;max-width:560px;margin-left:auto;margin-right:auto;font-size:16px;}
+.cta-row{display:flex;justify-content:center;gap:14px;margin-top:34px;flex-wrap:wrap;}
+.btn-primary{background:var(--torus-amber);color:#1A0D06;border:none;padding:15px 26px;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block;}
+.btn-secondary{background:transparent;color:#fff;border:1px solid #3A4560;padding:15px 26px;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;display:inline-block;}
+footer{background:var(--dark-bg);color:#8A93A3;padding:34px 0;font-size:12.5px;}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <div class="lockup"><span class="t">TORUS</span><span class="x">×</span><span class="s">Salesforce</span></div>
+    <div class="nav-links">
+      <a href="#problem">The Problem</a>
+      <a href="#platform">Platform</a>
+      <a href="#agentforce">Agentforce</a>
+      <a href="#roi">ROI</a>
+      <a href="#roadmap">Roadmap</a>
+    </div>
+    <button class="nav-cta" onclick="document.getElementById('close').scrollIntoView({behavior:'smooth'})">Get in touch</button>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">☰</button>
+  </div>
+  <div class="drawer" id="drawer">
+    <a href="#problem">The Problem</a>
+    <a href="#platform">Platform</a>
+    <a href="#agentforce">Agentforce</a>
+    <a href="#roi">ROI</a>
+    <a href="#roadmap">Roadmap</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <div class="conf-line">Confidential · Prepared for Torus Leadership · September 2026</div>
+    <h1 class="reveal in">You've outgrown the CRM<br>that got you <span class="accent">here.</span></h1>
+    <p class="sub reveal in">
+      Torus scaled from home batteries to gigawatt-scale utility partnerships faster than its go-to-market
+      stack did. HubSpot was built to get you your first thousand customers. It wasn't built to carry
+      25-year warranties, utility RFPs, and grid-grade security — at the same time.
+    </p>
+    <div class="chips reveal in">
+      <span class="chip">Sales Cloud</span>
+      <span class="chip">Service Cloud</span>
+      <span class="chip">Field Service</span>
+      <span class="chip">Data 360</span>
+      <span class="chip">Agentforce</span>
+      <span class="chip">Slack</span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card reveal"><div class="num">$267M+</div><div class="lbl">raised across funding rounds, including a $200M Magnetar investment</div></div>
+      <div class="stat-card reveal"><div class="num">500 MW</div><div class="lbl">in demand-response commitments with PacifiCorp / Rocky Mountain Power</div></div>
+      <div class="stat-card reveal"><div class="num">~200</div><div class="lbl">employees, scaling into a 540,000 sq ft GigaOne manufacturing facility</div></div>
+      <div class="stat-card reveal"><div class="num">25 yrs</div><div class="lbl">designed product life — every install is a decade-spanning relationship</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">The Problem</div>
+      <h2>Torus grew into three businesses. HubSpot still sees one.</h2>
+      <p>Residential retrofits, commercial &amp; industrial accounts, and utility-scale grid partnerships all move
+      through the same generalist, marketing-born CRM. Here's where that shows up.</p>
+    </div>
+    <div class="pain-grid">
+
+      <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="face front">
+            <h4>One CRM, three very different sales motions</h4>
+            <p class="desc">Homeowners, industrial accounts like Ash Grove Cement and Varex, and utility MOUs
+            with PacifiCorp for up to 500 MW — all tracked as the same generic "deal."</p>
+            <div class="metric-row"><span class="metric">3 sales motions</span><span class="metric">1 undifferentiated pipeline</span></div>
+            <div class="flip-hint">Tap to see the fix →</div>
+          </div>
+          <div class="face back">
+            <h4>Sales Cloud</h4>
+            <ul class="steps">
+              <li>Separate pipelines for residential, C&amp;I, and utility, on one platform</li>
+              <li>Forecasting that reflects MW committed, not just deal value</li>
+              <li>Multi-year MOU and demand-response contracts modeled natively</li>
+            </ul>
+            <div class="impact">One data model your engineers don't have to bend a marketing tool into.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="face front">
+            <h4>Field work at industrial scale, tracked like a mailing list</h4>
+            <p class="desc">Dozens of physical deployments a year, up to 1.2 MW commercial systems, install
+            crews and commissioning checklists — with no native dispatch or scheduling underneath.</p>
+            <div class="metric-row"><span class="metric">0 native dispatch</span><span class="metric">Physical installs, spreadsheet-tracked</span></div>
+            <div class="flip-hint">Tap to see the fix →</div>
+          </div>
+          <div class="face back">
+            <h4>Field Service</h4>
+            <ul class="steps">
+              <li>Technician scheduling and routing optimized by skill, location, part availability</li>
+              <li>Mobile install &amp; commissioning checklists tied straight to the account record</li>
+              <li>GigaOne-manufactured unit and parts visibility for every dispatch</li>
+            </ul>
+            <div class="impact">Install and commissioning data lands on the account — not in a spreadsheet.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="face front">
+            <h4>25-year warranties, supported like 90-day tickets</h4>
+            <p class="desc">Torus Stations and Spin units are built to last 25+ years. The support tooling
+            underneath is built for SaaS-speed resolution, not multi-decade asset relationships.</p>
+            <div class="metric-row"><span class="metric">25-yr product life</span><span class="metric">90-day support mindset</span></div>
+            <div class="flip-hint">Tap to see the fix →</div>
+          </div>
+          <div class="face back">
+            <h4>Service Cloud + Data 360</h4>
+            <ul class="steps">
+              <li>A full asset timeline per Torus Station / Spin unit, not just per ticket</li>
+              <li>Proactive service triggered by device telemetry, before a homeowner calls</li>
+              <li>One case record spans the entire ownership lifecycle</li>
+            </ul>
+            <div class="impact">Every unit's full 25-year story, in one record.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="face front">
+            <h4>A grid-grade security promise, a generalist platform underneath</h4>
+            <p class="desc">Torus markets Torus CDR and has shared a public stage discussing critical-infrastructure
+            security with the former CISA director. The commercial backbone behind that promise still runs
+            on a platform built for marketing lists.</p>
+            <div class="metric-row"><span class="metric">Public: grid-grade security</span><span class="metric">Private: generalist SaaS CRM</span></div>
+            <div class="flip-hint">Tap to see the fix →</div>
+          </div>
+          <div class="face back">
+            <h4>Data 360 + Agentforce</h4>
+            <ul class="steps">
+              <li>Field-level permissions and audit logging on every record, every workflow</li>
+              <li>Agentic monitoring that mirrors the CDR promise inside the commercial platform</li>
+              <li>Clean separation between residential PII and utility / grid operational data</li>
+            </ul>
+            <div class="impact">Walk into a utility security review with a platform, not a workaround.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flip-card reveal" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="face front">
+            <h4>Day-to-day collaboration and revenue systems, still two separate worlds</h4>
+            <p class="desc">Wherever your teams chat and coordinate day to day, that trust rarely extends
+            to the systems that actually carry the customer relationship — sales, service, and ops end up
+            living somewhere else entirely.</p>
+            <div class="metric-row"><span class="metric">Collaboration: fast</span><span class="metric">Revenue systems: still separate</span></div>
+            <div class="flip-hint">Tap to see the fix →</div>
+          </div>
+          <div class="face back">
+            <h4>Slack + Sales / Service Cloud</h4>
+            <ul class="steps">
+              <li>Deals, cases, and grid alerts surface in the channels your teams already work in</li>
+              <li>No "go check the other tool" — one connective layer across sales, service, and ops</li>
+              <li>Extends the trust already placed in everyday collaboration tools, rather than asking for new trust</li>
+            </ul>
+            <div class="impact">If the trust is already there for how you talk, this just extends it to how you sell and serve.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <p class="assump-note reveal">Deployment and partnership figures above are drawn from Torus's own public
+    announcements. Where a figure isn't public, it's modeled as a labeled assumption in the ROI section below —
+    happy to swap in real numbers.</p>
+  </div>
+</section>
+
+<!-- PLATFORM -->
+<section id="platform" style="background:var(--paper-soft);">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">The Platform</div>
+      <h2>One platform, built for three businesses at once.</h2>
+      <p>Not a rip-and-replace. Slack stays exactly where it is — everything else connects to it.</p>
+    </div>
+    <div class="platform-grid">
+      <div class="p-card reveal"><div class="dot"></div><h4>Sales Cloud</h4><div class="replaces">Replaces: generic deal tracking</div><p>Segment-aware pipelines for residential, C&amp;I, and utility deals, with forecasting that understands MW as well as dollars.</p></div>
+      <div class="p-card reveal"><div class="dot"></div><h4>Service Cloud</h4><div class="replaces">Replaces: ticket-only support</div><p>Case management built around a 25-year asset lifecycle, not a 90-day support window.</p></div>
+      <div class="p-card reveal"><div class="dot"></div><h4>Field Service</h4><div class="replaces">Replaces: spreadsheet dispatch</div><p>Technician scheduling, routing, and mobile commissioning checklists tied to every install.</p></div>
+      <div class="p-card reveal"><div class="dot"></div><h4>Data 360</h4><div class="replaces">Replaces: siloed telemetry</div><p>Unifies CRM, install records, and device telemetry from Torus Stations and Spin units into one graph.</p></div>
+      <div class="p-card keep reveal"><div class="dot"></div><h4>Slack</h4><div class="replaces">Extends collaboration</div><p>Becomes the shared surface where deals, cases, and grid alerts actually get worked, not just reported.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- JOURNEY -->
+<section>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">The Journey</div>
+      <h2>From first signal to grid-scale renewal.</h2>
+      <p>Every Torus deal — residential, industrial, or utility — moves through the same operating flow. Here's what carries it today, and what could.</p>
+    </div>
+    <div class="journey reveal">
+      <div class="j-stage"><div class="j-num">1</div><h5>Lead</h5><div class="j-replace">Sales Cloud</div><p>Installer referral, C&amp;I inbound, or a utility capacity RFP.</p></div>
+      <div class="j-stage"><div class="j-num">2</div><h5>Design &amp; Quote</h5><div class="j-replace">Sales Cloud</div><p>System sizing and proposal, scaled from a home battery to a 1.2 MW commercial system.</p></div>
+      <div class="j-stage"><div class="j-num">3</div><h5>Contract / MOU</h5><div class="j-replace">Sales Cloud</div><p>Multi-year utility demand-response commitments, modeled like the PacifiCorp MOU.</p></div>
+      <div class="j-stage"><div class="j-num">4</div><h5>Manufacture &amp; Install</h5><div class="j-replace">Field Service</div><p>GigaOne production feeds a scheduled, tracked install and commissioning visit.</p></div>
+      <div class="j-stage"><div class="j-num">5</div><h5>Monitor</h5><div class="j-replace">Data 360</div><p>Torus CDR telemetry flows into the same record as the account and asset.</p></div>
+      <div class="j-stage"><div class="j-num">6</div><h5>Service &amp; Warranty</h5><div class="j-replace">Service Cloud</div><p>One case history spans the full 25-year ownership arc.</p></div>
+      <div class="j-stage"><div class="j-num">7</div><h5>Grid Reporting &amp; Renewal</h5><div class="j-replace">Agentforce</div><p>Performance data feeds the next utility conversation automatically.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PILLARS -->
+<section style="background:var(--paper-soft);">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">A Closer Look</div>
+      <h2>Three places this actually changes how Torus runs.</h2>
+    </div>
+
+    <!-- Pillar 1: tabbed pipeline -->
+    <div class="pillar reveal">
+      <div class="pillar-head"><h3>One pipeline, three businesses</h3><span class="pillar-tag">Interactive</span></div>
+      <div class="tabbar">
+        <button class="tabbtn active" data-tab="res" onclick="showTab('res',this)">Residential</button>
+        <button class="tabbtn" data-tab="ci" onclick="showTab('ci',this)">Commercial &amp; Industrial</button>
+        <button class="tabbtn" data-tab="util" onclick="showTab('util',this)">Utility-Scale</button>
+      </div>
+      <div class="tab-panel active" id="tab-res">
+        <table class="pipe-table">
+          <tr><th>Account</th><th>Stage</th><th>System</th><th>Est. Value</th></tr>
+          <tr><td>Residential — Northern Utah</td><td><span class="stage-pill stage-1">Design &amp; Quote</span></td><td>Torus Station Core</td><td>$28,500</td></tr>
+          <tr><td>Residential — Wasatch Front</td><td><span class="stage-pill stage-2">Install Scheduled</span></td><td>Station + EV Charger</td><td>$34,200</td></tr>
+          <tr><td>Residential — Park City</td><td><span class="stage-pill stage-3">Commissioned</span></td><td>Torus Station Core</td><td>$26,900</td></tr>
+        </table>
+        <p class="assump-note">Illustrative accounts and values — modeled, not real Torus deal data.</p>
+      </div>
+      <div class="tab-panel" id="tab-ci">
+        <table class="pipe-table">
+          <tr><th>Account</th><th>Stage</th><th>System</th><th>Est. Value</th></tr>
+          <tr><td>Industrial — cement facility</td><td><span class="stage-pill stage-1">Site Assessment</span></td><td>1.2 MW commercial storage</td><td>$1.4M</td></tr>
+          <tr><td>Commercial — airport ground ops</td><td><span class="stage-pill stage-2">Contract Review</span></td><td>Backup + resilience system</td><td>$980K</td></tr>
+          <tr><td>Industrial — semiconductor site</td><td><span class="stage-pill stage-3">Commissioned</span></td><td>Power quality management</td><td>$1.1M</td></tr>
+        </table>
+        <p class="assump-note">Modeled on the class of accounts Torus has publicly named (e.g. industrial and airport customers) — figures are illustrative.</p>
+      </div>
+      <div class="tab-panel" id="tab-util">
+        <table class="pipe-table">
+          <tr><th>Utility Partner</th><th>Stage</th><th>Program</th><th>Capacity</th></tr>
+          <tr><td>Regional utility — Pacific Northwest</td><td><span class="stage-pill stage-1">RFP Response</span></td><td>Demand response</td><td>50 MW</td></tr>
+          <tr><td>Rocky Mountain Power</td><td><span class="stage-pill stage-2">MOU in force</span></td><td>Wattsmart Battery Program</td><td>Up to 500 MW</td></tr>
+          <tr><td>Regional utility — Idaho</td><td><span class="stage-pill stage-3">Deployed</span></td><td>Grid stabilization</td><td>30 MW</td></tr>
+        </table>
+        <p class="assump-note">Rocky Mountain Power / Wattsmart row reflects Torus's public announcements. Other rows are illustrative.</p>
+      </div>
+    </div>
+
+    <!-- Pillar 2: click-to-advance flow -->
+    <div class="pillar reveal">
+      <div class="pillar-head"><h3>From telemetry to resolution — automatically</h3><span class="pillar-tag">Interactive</span></div>
+      <div class="flow-wrap">
+        <div class="flow-track" id="flowTrack"></div>
+        <div class="flow-desc" id="flowDesc"></div>
+        <div class="flow-controls">
+          <button class="flow-btn" onclick="flowStep(-1)">← Back</button>
+          <button class="flow-btn" onclick="flowStep(1)">Next step →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pillar 3: before/after permissions -->
+    <div class="pillar reveal">
+      <div class="pillar-head"><h3>Permissions built for a grid-grade security review</h3><span class="pillar-tag">Before / After</span></div>
+      <div class="split-wrap">
+        <div class="split-side before">
+          <h5>Today — generalist CRM</h5>
+          <div class="perm-row"><span>Residential contact PII</span><span class="perm-tag bad">Same access as everything else</span></div>
+          <div class="perm-row"><span>Utility MOU terms</span><span class="perm-tag bad">Visible to any seat</span></div>
+          <div class="perm-row"><span>Field telemetry / fault data</span><span class="perm-tag bad">Not modeled in the CRM at all</span></div>
+          <div class="perm-row"><span>Change history</span><span class="perm-tag bad">Limited or none</span></div>
+        </div>
+        <div class="split-side after">
+          <h5>With Data 360 + field-level permissions</h5>
+          <div class="perm-row"><span>Residential contact PII</span><span class="perm-tag good">Role- and field-level restricted</span></div>
+          <div class="perm-row"><span>Utility MOU terms</span><span class="perm-tag good">Scoped to deal team + leadership</span></div>
+          <div class="perm-row"><span>Field telemetry / fault data</span><span class="perm-tag good">Unified into the asset record</span></div>
+          <div class="perm-row"><span>Change history</span><span class="perm-tag good">Full audit log, every object</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AGENTFORCE -->
+<section id="agentforce" class="dark-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow on-dark">Agentforce</div>
+      <h2>Agents that act, not just answer.</h2>
+      <p>Four concrete jobs Torus already does manually — each one a candidate for an agent that triggers,
+      decides, and acts inside the same platform.</p>
+    </div>
+    <div class="agent-grid">
+      <div class="agent-card reveal">
+        <h4>Telemetry Triage Agent</h4>
+        <div class="agent-meta">
+          <div><b>Triggers on:</b> an anomaly signal from a Torus Station or Spin unit</div>
+          <div><b>Decides:</b> severity and likely cause, from historical fault patterns</div>
+          <div><b>Acts:</b> opens a case and dispatches a technician with the right part, or resolves remotely</div>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <h4>Warranty Lifecycle Agent</h4>
+        <div class="agent-meta">
+          <div><b>Triggers on:</b> a unit approaching a maintenance milestone inside its 25-year warranty</div>
+          <div><b>Decides:</b> what maintenance or firmware action is due</div>
+          <div><b>Acts:</b> schedules a visit or pushes an update, and logs it to the asset record</div>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <h4>Utility RFP Agent</h4>
+        <div class="agent-meta">
+          <div><b>Triggers on:</b> a utility partner issuing a capacity or demand-response RFP</div>
+          <div><b>Decides:</b> which deployment specs and prior performance data match the ask</div>
+          <div><b>Acts:</b> drafts a first-pass response for the deal team to refine, not send unreviewed</div>
+        </div>
+      </div>
+      <div class="agent-card reveal">
+        <h4>Residential Support Agent</h4>
+        <div class="agent-meta">
+          <div><b>Triggers on:</b> a homeowner message about their Torus Station</div>
+          <div><b>Decides:</b> FAQ, billing question, or a real fault</div>
+          <div><b>Acts:</b> answers directly, or escalates to a human with full account and device history</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROI -->
+<section id="roi">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">The Model</div>
+      <h2>What this is worth — with the math showing.</h2>
+      <p>Every default below is a labeled assumption, seeded from Torus's public scale where we have it.
+      Move any slider — this is meant to be argued with, not just read.</p>
+    </div>
+    <div class="roi-shell reveal">
+      <div class="roi-total">
+        <span class="lbl">Estimated annual value</span>
+        <span class="val" id="roiTotal">$0</span>
+      </div>
+
+      <div class="roi-cat">
+        <div class="roi-cat-head"><h4>Faster industrial &amp; utility deal cycles</h4><span class="catval" id="cat1val">$0</span></div>
+        <div class="slider-row"><label><span>Industrial / utility deals per year</span><span id="c1a-out">15</span></label><input type="range" id="c1a" min="4" max="40" value="15" oninput="calc()"></div>
+        <div class="slider-row"><label><span>Average deal value</span><span id="c1b-out">$150K</span></label><input type="range" id="c1b" min="50000" max="1000000" step="10000" value="150000" oninput="calc()"></div>
+        <div class="slider-row"><label><span>Cycle-time reduction from a unified pipeline</span><span id="c1c-out">30%</span></label><input type="range" id="c1c" min="5" max="45" value="30" oninput="calc()"></div>
+        <div class="formula-note">Modeled as: deals × value × cycle-time reduction × 15% margin-on-speed factor. Benchmark: Schneider Electric cut deal-close time 30% with Sales Cloud.</div>
+        <div class="enabled-by"><b>Enabled by:</b> Sales Cloud pipeline &amp; forecasting</div>
+      </div>
+
+      <div class="roi-cat">
+        <div class="roi-cat-head"><h4>Field technician efficiency</h4><span class="catval" id="cat2val">$0</span></div>
+        <div class="slider-row"><label><span>Field technicians</span><span id="c2a-out">25</span></label><input type="range" id="c2a" min="5" max="120" value="25" oninput="calc()"></div>
+        <div class="slider-row"><label><span>Hours saved / week / technician via optimized dispatch</span><span id="c2b-out">4</span></label><input type="range" id="c2b" min="1" max="12" value="4" oninput="calc()"></div>
+        <div class="slider-row"><label><span>Fully-loaded hourly cost</span><span id="c2c-out">$45</span></label><input type="range" id="c2c" min="25" max="90" value="45" oninput="calc()"></div>
+        <div class="formula-note">Modeled as: technicians × hours saved × 52 weeks × hourly cost.</div>
+        <div class="enabled-by"><b>Enabled by:</b> Field Service scheduling &amp; routing</div>
+      </div>
+
+      <div class="roi-cat">
+        <div class="roi-cat-head"><h4>Support cost reduction via AI triage</h4><span class="catval" id="cat3val">$0</span></div>
+        <div class="slider-row"><label><span>Monthly support contacts</span><span id="c3a-out">2,000</span></label><input type="range" id="c3a" min="200" max="10000" step="100" value="2000" oninput="calc()"></div>
+        <div class="slider-row"><label><span>% deflected or accelerated by the Residential Support Agent</span><span id="c3b-out">25%</span></label><input type="range" id="c3b" min="5" max="60" value="25" oninput="calc()"></div>
+        <div class="slider-row"><label><span>Cost per contact</span><span id="c3c-out">$12</span></label><input type="range" id="c3c" min="4" max="40" value="12" oninput="calc()"></div>
+        <div class="formula-note">Modeled as: monthly contacts × 12 × deflection rate × cost per contact.</div>
+        <div class="enabled-by"><b>Enabled by:</b> Service Cloud + Agentforce Residential Support Agent</div>
+      </div>
+
+      <div class="roi-cat">
+        <div class="roi-cat-head"><h4>IT consolidation</h4><span class="catval" id="cat4val">$0</span></div>
+        <div class="slider-row"><label><span>Point tools consolidated into the platform</span><span id="c4a-out">3</span></label><input type="range" id="c4a" min="0" max="10" value="3" oninput="calc()"></div>
+        <div class="slider-row"><label><span>Average annual cost per tool retired</span><span id="c4b-out">$40K</span></label><input type="range" id="c4b" min="5000" max="150000" step="5000" value="40000" oninput="calc()"></div>
+        <div class="formula-note">Modeled as: tools retired × annual cost. Benchmark: Schneider Electric saved ~$2.7M in IT costs over three years at far larger scale.</div>
+        <div class="enabled-by"><b>Enabled by:</b> Consolidating onto one platform</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF -->
+<section style="background:var(--paper-soft);">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Proof, From a Comparable World</div>
+      <h2>Energy management at scale, on this platform.</h2>
+    </div>
+    <div class="proof-card reveal">
+      <div class="proof-side">
+        <div class="big">30% faster</div>
+        <div class="small">deal-close time, using Sales Cloud and CRM Analytics</div>
+      </div>
+      <div class="proof-main">
+        <h4>Schneider Electric</h4>
+        <p>Schneider Electric — a global leader in energy management and automation — consolidated its sales,
+        service, and analytics onto Salesforce to unify a business that spans homeowners, industrial sites,
+        and grid operators in more than 100 countries. Its "Digital Opportunity Factory," built on Sales Cloud
+        and CRM Analytics, now helps reps find and prioritize the right accounts, cutting time-to-close by
+        roughly 30% and contributing to about $2.7M in IT cost savings over three years. Its CIO has pointed to
+        the platform as the reason the company can finally connect data, process, and people across a business
+        that used to run on disconnected systems.</p>
+        <a href="https://www.salesforce.com/resources/customer-stories/schneider-electric-boosts-customer-satisfaction/" target="_blank" rel="noopener">Read the full Schneider Electric story →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">The Roadmap</div>
+      <h2>A phased path, not a big-bang cutover.</h2>
+    </div>
+    <div class="roadmap">
+      <div class="phase-card reveal">
+        <div class="ph">Phase 1 · First 90 Days</div>
+        <h4>Map the three businesses</h4>
+        <p>A discovery workshop to model residential, C&amp;I, and utility pipelines as distinct objects on one
+        platform. Scope a Sales Cloud pilot for one segment.</p>
+        <div class="milestone">Milestone: unified pipeline view live for one segment</div>
+      </div>
+      <div class="phase-card reveal">
+        <div class="ph">Phase 2 · Months 3–6</div>
+        <h4>Connect the physical world</h4>
+        <p>Stand up Field Service for install and commissioning workflows tied to GigaOne production; connect
+        Data 360 to device telemetry from deployed units.</p>
+        <div class="milestone">Milestone: first automated telemetry-to-case flow live</div>
+      </div>
+      <div class="phase-card reveal">
+        <div class="ph">Phase 3 · Months 6–12</div>
+        <h4>Turn on the agents</h4>
+        <p>Launch the Telemetry Triage, Warranty Lifecycle, and Utility RFP agents; extend Slack as the shared
+        surface for sales, service, and grid alerts.</p>
+        <div class="milestone">Milestone: RFP response cycle measured against today's baseline</div>
+      </div>
+    </div>
+    <p class="assump-note reveal" style="margin-top:20px;">Timeline is illustrative and subject to confirmed
+    scope, roadmap, and mutual availability — not a commitment from either side.</p>
+  </div>
+</section>
+
+<!-- CLOSE -->
+<section class="close-sec" id="close">
+  <div class="wrap">
+    <h2>Let's have the conversation your platform history hasn't had yet.</h2>
+    <p>Not a pitch to rip out what works. A conversation about whether the CRM that got Torus to its first
+    customers is the one that should carry it to its next hundred utility partnerships.</p>
+    <div class="cta-row">
+      <a class="btn-primary" href="mailto:?subject=Torus%20x%20Salesforce%20-%20let%27s%20talk">Book a 30-minute platform conversation</a>
+      <a class="btn-secondary" href="#roi">Revisit the ROI model</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Confidential · Prepared for Torus Leadership · September 2026</span>
+    <span>Forward-looking architecture and timelines are illustrative and subject to roadmap confirmation.</span>
+  </div>
+</footer>
+
+<script>
+// Nav drawer
+const navToggle = document.getElementById('navToggle');
+const nav = document.getElementById('nav');
+navToggle.addEventListener('click', () => {
+  const open = nav.classList.toggle('open');
+  navToggle.setAttribute('aria-expanded', open);
+});
+
+// Reveal on scroll
+const revealEls = document.querySelectorAll('.reveal');
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:0.12});
+  revealEls.forEach(el => io.observe(el));
+} else {
+  revealEls.forEach(el => el.classList.add('in'));
+}
+
+// Tabs
+function showTab(id, btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Click-to-advance flow
+const flowSteps = [
+  {label:"Anomaly Detected", desc:"A Torus Station reports an irregular discharge pattern via Torus CDR telemetry."},
+  {label:"Agent Evaluates", desc:"The Telemetry Triage Agent compares the signal against historical fault patterns and assigns a severity."},
+  {label:"Case Opens", desc:"A Service Cloud case is created automatically, pre-filled with the unit's full asset history."},
+  {label:"Technician Dispatched", desc:"Field Service routes the nearest qualified technician, with the right replacement part already flagged."},
+  {label:"Resolution Logged", desc:"The fix is logged to the same asset record — visible the next time this unit, or this customer, comes up."}
+];
+let flowIdx = 0;
+function renderFlow(){
+  const track = document.getElementById('flowTrack');
+  track.innerHTML = flowSteps.map((s,i) => {
+    const node = `<div class="flow-node ${i===flowIdx?'active':''}">${s.label}</div>`;
+    return i < flowSteps.length-1 ? node + `<span class="flow-arrow">→</span>` : node;
+  }).join('');
+  document.getElementById('flowDesc').textContent = flowSteps[flowIdx].desc;
+}
+function flowStep(dir){
+  flowIdx = Math.min(flowSteps.length-1, Math.max(0, flowIdx+dir));
+  renderFlow();
+}
+renderFlow();
+
+// ROI calculator
+function fmt(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+function fmtK(n){ return n>=1000 ? '$'+Math.round(n/1000)+'K' : '$'+n; }
+function calc(){
+  const c1a = +document.getElementById('c1a').value;
+  const c1b = +document.getElementById('c1b').value;
+  const c1c = +document.getElementById('c1c').value;
+  const c2a = +document.getElementById('c2a').value;
+  const c2b = +document.getElementById('c2b').value;
+  const c2c = +document.getElementById('c2c').value;
+  const c3a = +document.getElementById('c3a').value;
+  const c3b = +document.getElementById('c3b').value;
+  const c3c = +document.getElementById('c3c').value;
+  const c4a = +document.getElementById('c4a').value;
+  const c4b = +document.getElementById('c4b').value;
+
+  document.getElementById('c1a-out').textContent = c1a;
+  document.getElementById('c1b-out').textContent = fmtK(c1b);
+  document.getElementById('c1c-out').textContent = c1c + '%';
+  document.getElementById('c2a-out').textContent = c2a;
+  document.getElementById('c2b-out').textContent = c2b;
+  document.getElementById('c2c-out').textContent = '$'+c2c;
+  document.getElementById('c3a-out').textContent = c3a.toLocaleString('en-US');
+  document.getElementById('c3b-out').textContent = c3b + '%';
+  document.getElementById('c3c-out').textContent = '$'+c3c;
+  document.getElementById('c4a-out').textContent = c4a;
+  document.getElementById('c4b-out').textContent = fmtK(c4b);
+
+  const cat1 = c1a * c1b * (c1c/100) * 0.15;
+  const cat2 = c2a * c2b * 52 * c2c;
+  const cat3 = c3a * 12 * (c3b/100) * c3c;
+  const cat4 = c4a * c4b;
+
+  document.getElementById('cat1val').textContent = fmt(cat1);
+  document.getElementById('cat2val').textContent = fmt(cat2);
+  document.getElementById('cat3val').textContent = fmt(cat3);
+  document.getElementById('cat4val').textContent = fmt(cat4);
+  document.getElementById('roiTotal').textContent = fmt(cat1+cat2+cat3+cat4);
+}
+calc();
+</script>
+</body>
+</html>
